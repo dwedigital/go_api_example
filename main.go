@@ -3,13 +3,15 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+	// json dictates what the fields are called
+	ID     string  
+	Title  string  `json:"title" binding:"required"`
+	Artist string  `json:"artist" binding:"required"`
+	Price  float64 `json:"price" binding:"required"`
 }
 
 var albums = []album{
@@ -18,12 +20,15 @@ var albums = []album{
 	{ID: "3", Title: "The Division Bell", Artist: "Pink Floyd", Price: 8.99},
 }
 
-func main() {
+
+
+func router() *gin.Engine{
 	r := gin.Default()
+	// routes
 	r.GET("/albums", getAlbums)
 	r.POST("/albums", postAlbums)
 	r.GET("/albums/:id", getAlbumByID)
-	r.Run(":8080")
+	return r
 }
 
 func getAlbums(c *gin.Context) {
@@ -37,6 +42,8 @@ func postAlbums(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
+	// auto-increment ID by converting len of albums to int + 1
+	newAlbum.ID = strconv.FormatInt(int64(len(albums) + 1),10)
 	albums = append(albums, newAlbum)
 	c.JSON(http.StatusOK, newAlbum)
 }
@@ -50,4 +57,10 @@ func getAlbumByID(c *gin.Context) {
 		}
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"error": "album not found"})
+}
+
+func main(){
+	r := router()
+	r.Run(":8080")
+
 }
